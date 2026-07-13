@@ -1,0 +1,7 @@
+{
+  "name": "samarkand-breads-backend",
+  "version": "1.0.0",
+  "description": "Samarkand Breads uchun Telegram order backend (token xavfsiz saqlanadi)",
+  "main": "api/send-order.js",
+  "license": "MIT"
+}
