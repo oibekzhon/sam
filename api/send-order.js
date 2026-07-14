@@ -13,12 +13,39 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { name, phone, product } = req.body || {};
+    const { name, phone, product, website } = req.body || {};
+
+    if (website) {
+      return res.status(400).json({ ok: false, error: "So'rov rad etildi" });
+    }
 
     if (!name || !phone || !product) {
       return res.status(400).json({ ok: false, error: "Ism, telefon va mahsulot majburiy" });
     }
-    
+
+    if (String(name).length > 60 || String(phone).length > 30) {
+      return res.status(400).json({ ok: false, error: "Kiritilgan ma'lumot juda uzun" });
+    }
+
+    const namePattern = /^[a-zA-ZʻʼʹА-Яа-яЁёʼ'\-\s]{2,60}$/u;
+    if (!namePattern.test(name)) {
+      return res.status(400).json({ ok: false, error: "Ism formati noto'g'ri" });
+    }
+
+    const phonePattern = /^[\d\s()+\-]{7,20}$/;
+    if (!phonePattern.test(phone)) {
+      return res.status(400).json({ ok: false, error: "Telefon raqami formati noto'g'ri" });
+    }
+
+    const ALLOWED_PRODUCTS = [
+      "Gala-Osiyo noni",
+      "Kunjutli obinon",
+      "Sariyog'li patir"
+    ];
+    if (!ALLOWED_PRODUCTS.includes(product)) {
+      return res.status(400).json({ ok: false, error: "Noma'lum mahsulot" });
+    }
+
     const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
     const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
@@ -61,7 +88,6 @@ export default async function handler(req, res) {
   }
 }
 
-// Oddiy HTML-escape, xabarga zararli teglar tushmasligi uchun
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, "&amp;")
