@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { name, phone, product, website } = req.body || {};
+    const { name, phone, product, website, turnstileToken } = req.body || {};
 
     if (website) {
       return res.status(400).json({ ok: false, error: "So'rov rad etildi" });
@@ -21,6 +21,35 @@ export default async function handler(req, res) {
 
     if (!name || !phone || !product) {
       return res.status(400).json({ ok: false, error: "Ism, telefon va mahsulot majburiy" });
+    }
+
+    if (!turnstileToken) {
+      return res.status(400).json({ ok: false, error: "Captcha tasdiqlanmadi" });
+    }
+
+    const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY;
+    if (!TURNSTILE_SECRET_KEY) {
+      console.error("TURNSTILE_SECRET_KEY sozlanmagan!");
+      return res.status(500).json({ ok: false, error: "Server sozlamalarida xatolik" });
+    }
+
+    const verifyResponse = await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          secret: TURNSTILE_SECRET_KEY,
+          response: turnstileToken
+        })
+      }
+    );
+
+    const verifyData = await verifyResponse.json();
+
+    if (!verifyData.success) {
+      console.error("Turnstile tasdiqlanmadi:", verifyData["error-codes"]);
+      return res.status(400).json({ ok: false, error: "Captcha tasdiqlanmadi, qaytadan urinib ko'ring" });
     }
 
     if (String(name).length > 60 || String(phone).length > 30) {
