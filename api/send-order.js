@@ -32,6 +32,7 @@ export default async function handler(req, res) {
       console.error("TURNSTILE_SECRET_KEY sozlanmagan!");
       return res.status(500).json({ ok: false, error: "Server sozlamalarida xatolik" });
     }
+    console.log("DEBUG: kalit uzunligi:", TURNSTILE_SECRET_KEY.length, "| boshi:", JSON.stringify(TURNSTILE_SECRET_KEY.slice(0, 5)), "| oxiri:", JSON.stringify(TURNSTILE_SECRET_KEY.slice(-5)));
 
     const verifyResponse = await fetch(
       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
