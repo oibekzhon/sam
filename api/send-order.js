@@ -32,7 +32,9 @@ async function checkRateLimit(ip) {
 }
 
 export default async function handler(req, res) {
-  const ALLOWED_ORIGIN = "https://oibekzhon.github.io";
+  const ALLOWED_ORIGINS = ["https://samarkandbreads.yolaco.uz", "https://oibekzhon.github.io"];
+  const origin = req.headers.origin;
+  const ALLOWED_ORIGIN = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
