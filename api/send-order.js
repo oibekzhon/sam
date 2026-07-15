@@ -92,7 +92,7 @@ export default async function handler(req, res) {
       `📅 <b>Vaqt:</b> ${new Date().toLocaleString("uz-UZ")}`;
 
     const telegramResponse = await fetch(
-      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+      `https: wapi.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
