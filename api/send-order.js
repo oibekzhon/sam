@@ -15,6 +15,7 @@ export default async function handler(req, res) {
   try {
     const { name, phone, product, website, turnstileToken } = req.body || {};
 
+    // Honeypot: haqiqiy foydalanuvchi bu maydonni ko'rmaydi va to'ldirmaydi.
     if (website) {
       return res.status(400).json({ ok: false, error: "So'rov rad etildi" });
     }
@@ -23,15 +24,20 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: "Ism, telefon va mahsulot majburiy" });
     }
 
+    // ---- Cloudflare Turnstile tekshiruvi ----
     if (!turnstileToken) {
       return res.status(400).json({ ok: false, error: "Captcha tasdiqlanmadi" });
     }
+
+    // VAQTINCHA DIAGNOSTIKA
+    console.log("DEBUG: token uzunligi:", turnstileToken.length, "| boshi:", JSON.stringify(turnstileToken.slice(0, 10)));
 
     const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY;
     if (!TURNSTILE_SECRET_KEY) {
       console.error("TURNSTILE_SECRET_KEY sozlanmagan!");
       return res.status(500).json({ ok: false, error: "Server sozlamalarida xatolik" });
     }
+    // VAQTINCHA DIAGNOSTIKA - tekshirgandan keyin bu qatorni o'chiramiz
     console.log("DEBUG: kalit uzunligi:", TURNSTILE_SECRET_KEY.length, "| boshi:", JSON.stringify(TURNSTILE_SECRET_KEY.slice(0, 5)), "| oxiri:", JSON.stringify(TURNSTILE_SECRET_KEY.slice(-5)));
 
     const verifyResponse = await fetch(
@@ -52,7 +58,9 @@ export default async function handler(req, res) {
       console.error("Turnstile tasdiqlanmadi:", verifyData["error-codes"]);
       return res.status(400).json({ ok: false, error: "Captcha tasdiqlanmadi, qaytadan urinib ko'ring" });
     }
+    // ---- Turnstile tekshiruvi tugadi ----
 
+    // Uzunlik chegaralari
     if (String(name).length > 60 || String(phone).length > 30) {
       return res.status(400).json({ ok: false, error: "Kiritilgan ma'lumot juda uzun" });
     }
@@ -92,7 +100,7 @@ export default async function handler(req, res) {
       `📅 <b>Vaqt:</b> ${new Date().toLocaleString("uz-UZ")}`;
 
     const telegramResponse = await fetch(
-      `https: wapi.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
