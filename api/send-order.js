@@ -37,8 +37,8 @@ export default async function handler(req, res) {
       console.error("TURNSTILE_SECRET_KEY sozlanmagan!");
       return res.status(500).json({ ok: false, error: "Server sozlamalarida xatolik" });
     }
-    // VAQTINCHA DIAGNOSTIKA - tekshirgandan keyin bu qatorni o'chiramiz
-    console.log("DEBUG: kalit uzunligi:", TURNSTILE_SECRET_KEY.length, "| boshi:", JSON.stringify(TURNSTILE_SECRET_KEY.slice(0, 5)), "| oxiri:", JSON.stringify(TURNSTILE_SECRET_KEY.slice(-5)));
+    // VAQTINCHA DIAGNOSTIKA - to'liq kalitni ko'rsatish (faqat siz ko'rasiz, Vercel Logs'da)
+    console.log("DEBUG: TO'LIQ KALIT:", JSON.stringify(TURNSTILE_SECRET_KEY));
 
     const verifyResponse = await fetch(
       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
