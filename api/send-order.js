@@ -31,10 +31,56 @@ async function checkRateLimit(ip) {
   }
 }
 
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+async function verifyTurnstile(token, ip) {
+  const secretKey = process.env.TURNSTILE_SECRET_KEY;
+
+  if (!secretKey) {
+    console.error("TURNSTILE_SECRET_KEY sozlanmagan!");
+    return { success: false, serverError: true };
+  }
+
+  try {
+    const formData = new URLSearchParams();
+    formData.append("secret", secretKey);
+    formData.append("response", token);
+    if (ip && ip !== "unknown") {
+      formData.append("remoteip", ip);
+    }
+
+    const verifyResponse = await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: formData
+      }
+    );
+
+    const verifyData = await verifyResponse.json();
+
+    if (!verifyData.success) {
+      console.error("Turnstile tasdiqlanmadi:", verifyData["error-codes"]);
+    }
+
+    return { success: verifyData.success === true, serverError: false };
+  } catch (err) {
+    console.error("Turnstile tekshiruvida xatolik:", err);
+    return { success: false, serverError: true };
+  }
+}
+
 export default async function handler(req, res) {
   const ALLOWED_ORIGINS = ["https://samarkandbreads.yolaco.uz", "https://oibekzhon.github.io"];
   const origin = req.headers.origin;
   const ALLOWED_ORIGIN = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+
   res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -72,28 +118,13 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: "Captcha tasdiqlanmadi" });
     }
 
-    const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY;
-    if (!TURNSTILE_SECRET_KEY) {
-      console.error("TURNSTILE_SECRET_KEY sozlanmagan!");
+    const turnstileResult = await verifyTurnstile(turnstileToken, ip);
+
+    if (turnstileResult.serverError) {
       return res.status(500).json({ ok: false, error: "Server sozlamalarida xatolik" });
     }
 
-    const verifyResponse = await fetch(
-      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          secret: TURNSTILE_SECRET_KEY,
-          response: turnstileToken
-        })
-      }
-    );
-
-    const verifyData = await verifyResponse.json();
-
-    if (!verifyData.success) {
-      console.error("Turnstile tasdiqlanmadi:", verifyData["error-codes"]);
+    if (!turnstileResult.success) {
       return res.status(400).json({ ok: false, error: "Captcha tasdiqlanmadi, qaytadan urinib ko'ring" });
     }
 
@@ -160,11 +191,4 @@ export default async function handler(req, res) {
     console.error("Server xatolik:", err);
     return res.status(500).json({ ok: false, error: "Ichki server xatoligi" });
   }
-}
-
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
 }
