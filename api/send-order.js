@@ -132,8 +132,10 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: "Kiritilgan ma'lumot juda uzun" });
     }
 
+    const normalizedName = String(name).replace(/[\u2018\u2019\u02BC]/g, "'");
+
     const namePattern = /^[a-zA-ZʻʼʹА-Яа-яЁёʼ'\-\s]{2,60}$/u;
-    if (!namePattern.test(name)) {
+    if (!namePattern.test(normalizedName)) {
       return res.status(400).json({ ok: false, error: "Ism formati noto'g'ri" });
     }
 
@@ -161,7 +163,7 @@ export default async function handler(req, res) {
 
     const messageText =
       `🔔 <b>YANGI BUYURTMA!</b>\n\n` +
-      `👤 <b>Mijoz:</b> ${escapeHtml(name)}\n` +
+      `👤 <b>Mijoz:</b> ${escapeHtml(normalizedName)}\n` +
       `📞 <b>Telefon:</b> ${escapeHtml(phone)}\n` +
       `🍞 <b>Mahsulot:</b> ${escapeHtml(product)}\n` +
       `📅 <b>Vaqt:</b> ${new Date().toLocaleString("uz-UZ")}`;
