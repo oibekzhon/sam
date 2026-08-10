@@ -125,7 +125,7 @@ export default async function handler(req, res) {
     }
 
     if (!turnstileResult.success) {
-      return res.status(400).json({ ok: false, error: "Captcha tasdiqlanmadi, qaytadan urinib ko'ring" });
+      return res.status(400).json({ ok: false, error: "Saytni yangilab, qaytadan urinib ko'ring" });
     }
 
     if (String(name).length > 60 || String(phone).length > 30) {
